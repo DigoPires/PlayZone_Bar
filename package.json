@@ -6,6 +6,7 @@
     "build": "corepack pnpm run typecheck && corepack pnpm run build:workspaces",
     "build:workspaces": "corepack pnpm -r --if-present run build",
     "dev": "node ./scripts/dev.mjs",
+    "start": "corepack pnpm --filter @workspace/api-server start",
     "typecheck:libs": "tsc --build",
     "typecheck": "corepack pnpm run typecheck:libs && corepack pnpm --filter @workspace/api-server --filter @workspace/playzone-bar run typecheck"
   },
