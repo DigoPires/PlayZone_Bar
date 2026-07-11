@@ -3,11 +3,11 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "npm run typecheck && npm run build:workspaces",
-    "build:workspaces": "npm -r --if-present run build",
+    "build": "corepack pnpm run typecheck && corepack pnpm run build:workspaces",
+    "build:workspaces": "corepack pnpm -r --if-present run build",
     "dev": "node ./scripts/dev.mjs",
     "typecheck:libs": "tsc --build",
-    "typecheck": "npm run typecheck:libs && npm -r --prefix artifacts --if-present run typecheck"
+    "typecheck": "corepack pnpm run typecheck:libs && corepack pnpm --filter @workspace/api-server --filter @workspace/playzone-bar run typecheck"
   },
   "private": true,
   "dependencies": {

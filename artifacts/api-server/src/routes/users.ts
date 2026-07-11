@@ -1,23 +1,36 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { db, usersTable } from "@workspace/db";
 import {
   ListUsersResponse,
-  CreateUserBody,
   CreateUserResponse,
   UpdateUserParams,
-  UpdateUserBody,
   UpdateUserResponse,
   DeleteUserParams,
 } from "@workspace/api-zod";
 
 const router = Router();
 
+const createUserSchema = z.object({
+  username: z.string().min(3),
+  name: z.string().min(1),
+  password: z.string().min(6),
+  role: z.string().optional().default("admin"),
+});
+
+const updateUserSchema = z.object({
+  username: z.string().min(3).optional(),
+  name: z.string().min(1).optional(),
+  password: z.string().min(6).optional(),
+  role: z.string().optional(),
+});
+
 function serializeUser(u: typeof usersTable.$inferSelect) {
   return {
     id: u.id,
-    email: u.email,
+    username: u.username,
     name: u.name,
     role: u.role,
     createdAt: u.createdAt.toISOString(),
@@ -30,7 +43,7 @@ router.get("/users", async (_req, res): Promise<void> => {
 });
 
 router.post("/users", async (req, res): Promise<void> => {
-  const parsed = CreateUserBody.safeParse(req.body);
+  const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
@@ -41,7 +54,7 @@ router.post("/users", async (req, res): Promise<void> => {
   const [user] = await db
     .insert(usersTable)
     .values({
-      email: parsed.data.email,
+      username: parsed.data.username,
       name: parsed.data.name,
       passwordHash,
       role: parsed.data.role,
@@ -58,7 +71,7 @@ router.patch("/users/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const body = UpdateUserBody.safeParse(req.body);
+  const body = updateUserSchema.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
     return;
@@ -66,7 +79,7 @@ router.patch("/users/:id", async (req, res): Promise<void> => {
 
   const d = body.data;
   const updateData: Record<string, unknown> = {};
-  if (d.email !== undefined) updateData.email = d.email;
+  if (d.username !== undefined) updateData.username = d.username;
   if (d.name !== undefined) updateData.name = d.name;
   if (d.role !== undefined) updateData.role = d.role;
   if (d.password !== undefined) updateData.passwordHash = await bcrypt.hash(d.password, 12);

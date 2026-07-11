@@ -13,21 +13,27 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function AdminUsers() {
   const { data: users = [], refetch } = useListUsers();
-  
-  // Ensure users is an array
+
   const usersArray = Array.isArray(users) ? users : [];
-  
+
   const { mutateAsync: createUser } = useCreateUser();
   const { mutateAsync: deleteUser } = useDeleteUser();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [form, setForm] = useState({ username: "", name: "", password: "", role: "admin" as "admin" });
+  const [form, setForm] = useState({ username: "", name: "", password: "", role: "admin" as const });
 
   async function handleCreate() {
     try {
-      await createUser({ data: { username: form.username, name: form.name, password: form.password, role: form.role } });
+      await createUser({
+        data: {
+          username: form.username,
+          name: form.name,
+          password: form.password,
+          role: form.role,
+        },
+      } as never);
       toast({ title: "Usuário criado com sucesso!" });
       setOpen(false);
       setForm({ username: "", name: "", password: "", role: "admin" });
@@ -45,7 +51,7 @@ export default function AdminUsers() {
   async function confirmDelete() {
     if (!deleteId) return;
     try {
-      await deleteUser({ id: deleteId });
+      await deleteUser({ id: deleteId } as never);
       toast({ title: "Usuário removido" });
       refetch();
       setDeleteConfirmOpen(false);
@@ -108,7 +114,7 @@ export default function AdminUsers() {
                 <div>
                   <p className="font-semibold">{user.name}</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">{user.username}</span>
+                    <span className="text-sm text-muted-foreground">{typeof user === 'object' && 'username' in user ? String(user.username) : ""}</span>
                     <Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role}</Badge>
                   </div>
                 </div>
