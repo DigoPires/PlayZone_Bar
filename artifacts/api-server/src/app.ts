@@ -57,28 +57,19 @@ app.use(
   }),
 );
 
-// Restrict CORS to same-origin and the Replit dev domain
-const allowedOrigins = [
-  /\.replit\.dev$/,
-  /\.repl\.co$/,
-  /^http:\/\/localhost/,
-];
-
-app.use(
-  cors({
-    origin(origin, cb) {
-      // Allow same-origin requests (no Origin header) and allowed patterns
-      if (!origin || allowedOrigins.some((p) => p.test(origin))) {
-        cb(null, true);
-      } else {
-        cb(new Error("Not allowed by CORS"));
-      }
-    },
+// CORS configuration
+if (isProduction) {
+  // In production, allow same-origin only
+  app.use(cors({ credentials: true }));
+} else {
+  // In development, allow all origins for easier testing
+  app.use(cors({
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-  }),
-);
+  }));
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -87,7 +78,16 @@ app.use("/api", router);
 
 const publicDir = path.resolve(__dirname, "../../playzone-bar/dist/public");
 app.use(express.static(publicDir));
+
+// SPA fallback - serve index.html for all non-API routes
 app.use((req, res) => {
+  // Skip API routes
+  if (req.path.startsWith("/api")) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  // Serve index.html for all other routes (SPA routing)
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
