@@ -22,6 +22,12 @@ if (!process.env.SESSION_SECRET) {
 
 const app = express();
 
+// When running behind a proxy (Render), trust the first proxy so secure cookies and
+// X-Forwarded-* headers are handled correctly.
+if (isProduction) {
+  app.set('trust proxy', 1);
+}
+
 app.use(
   pinoHttp({
     logger,
@@ -51,8 +57,9 @@ app.use(
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true,
-      sameSite: "lax",
-      secure: false, // Allow cookies in development
+        // In production we require secure cookies; in development allow non-secure.
+        sameSite: isProduction ? 'lax' : 'lax',
+        secure: isProduction,
     },
   }),
 );
