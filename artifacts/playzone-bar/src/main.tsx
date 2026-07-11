@@ -5,8 +5,11 @@ import App from './App';
 import './index.css';
 import { setBaseUrl } from '@workspace/api-client-react';
 
-// Set API base URL from environment
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Set API base URL from environment.
+// If VITE_API_URL points to localhost (developer machine), ignore it for builds
+// on the hosting provider so the client uses the same origin for API calls.
+const rawApiUrl = import.meta.env.VITE_API_URL as string | undefined;
+const apiUrl = rawApiUrl && !rawApiUrl.includes('localhost') ? rawApiUrl : null;
 setBaseUrl(apiUrl);
 
 // Register service worker for PWA
