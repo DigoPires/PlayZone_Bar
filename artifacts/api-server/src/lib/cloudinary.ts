@@ -31,7 +31,7 @@ export async function uploadImage(file: Express.Multer.File, folder?: string): P
       publicId: result.public_id,
     };
   } catch (error) {
-    logger.error('Error uploading to Cloudinary:', error);
+    logger.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error uploading to Cloudinary:');
     throw new Error('Failed to upload image');
   }
 }
@@ -40,7 +40,7 @@ export async function deleteImage(publicId: string): Promise<void> {
   try {
     await cloudinary.uploader.destroy(publicId);
   } catch (error) {
-    logger.error('Error deleting from Cloudinary:', error);
+    logger.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Error deleting from Cloudinary:');
     throw new Error('Failed to delete image');
   }
 }

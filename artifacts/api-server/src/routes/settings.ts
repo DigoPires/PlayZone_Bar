@@ -35,7 +35,8 @@ async function ensureSettings() {
   const [created] = await db
     .insert(settingsTable)
     .values({
-      heroTitle: "PlayZone Bar",
+      heroTitlePurple: "PLAY",
+      heroTitleWhite: "ZONE",
       heroSubtitle: "A melhor experiência gaming da cidade",
       aboutText:
         "O PlayZone Bar é o destino definitivo para gamers e apaixonados por entretenimento. Combinamos alta tecnologia, jogos de última geração e um bar premium para criar uma experiência inesquecível.",
