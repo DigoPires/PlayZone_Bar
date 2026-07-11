@@ -17,6 +17,21 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const req = event.request;
+
+  // Use network-first for images and uploaded assets so users see latest uploads
+  if (req.destination === 'image' || req.url.includes('/attached_assets/') || req.url.includes('/uploads/')) {
+    event.respondWith(
+      fetch(req).then((networkRes) => {
+        // Optionally update the cache for future navigations
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, networkRes.clone()));
+        return networkRes;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Default cache-first strategy for shell assets
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
