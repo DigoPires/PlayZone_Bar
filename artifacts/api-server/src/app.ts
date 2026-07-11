@@ -7,8 +7,13 @@ import { logger } from "./lib/logger";
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load env variables from playzone-bar directory
-dotenv.config({ path: path.resolve(__dirname, '../../playzone-bar/.env') });
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Load env variables from playzone-bar directory for local development only.
+// Render provides runtime environment variables directly, so we avoid overriding them.
+if (!isProduction) {
+  dotenv.config({ path: path.resolve(__dirname, '../../playzone-bar/.env') });
+}
 
 if (!process.env.SESSION_SECRET) {
   logger.warn("SESSION_SECRET env var is not set — refusing to start with insecure default");

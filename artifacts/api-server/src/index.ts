@@ -2,7 +2,10 @@ import 'dotenv/config';
 import app from "./app";
 import { logger } from "./lib/logger";
 
-const rawPort = process.env["API_PORT"] || process.env["PORT"] || "5000";
+const isRenderRuntime = Boolean(process.env.RENDER) || process.env.NODE_ENV === "production";
+const rawPort = isRenderRuntime
+  ? process.env["PORT"] || process.env["API_PORT"] || "10000"
+  : process.env["API_PORT"] || process.env["PORT"] || "5000";
 const requestedPort = Number(rawPort);
 
 if (Number.isNaN(requestedPort) || requestedPort <= 0) {

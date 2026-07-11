@@ -15,3 +15,5 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: API_PORT
+        value: 10000
