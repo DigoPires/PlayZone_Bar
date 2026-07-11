@@ -57,8 +57,29 @@ postgresql://user:password@pooler.region.us-east-1.aws.neon.tech/dbname?sslmode=
    - **Name**: `playzone-api` (or your preferred name)
    - **Root Directory**: `artifacts/api-server`
    - **Environment**: `Node`
-   - **Build Command**: `npm run build` (or your build command)
-   - **Start Command**: `npm start`
+   - **Build Command**: `corepack enable && corepack prepare pnpm@10.15.0 --activate && pnpm install --frozen-lockfile && pnpm --filter @workspace/db push && pnpm --filter @workspace/scripts seed && pnpm --filter @workspace/playzone-bar run build && pnpm --filter @workspace/api-server run build`
+   - **Start Command**: `pnpm --filter @workspace/api-server start`
+   - _Note: The build command in `render.yaml` already includes migrations and seed_
+
+### Automatic Database Setup on Render
+
+The build process automatically:
+1. **Runs Drizzle migrations** (`pnpm --filter @workspace/db push`) - Creates database schema
+2. **Seeds data** (`pnpm --filter @workspace/scripts seed`) - Creates admin user and initial data
+3. **Builds application** - Compiles TypeScript to production-ready code
+
+This means:
+- ✅ Database tables are created automatically
+- ✅ Admin user is created automatically (username: `admin`)
+- ✅ No manual database setup needed after deployment
+- ✅ Each deployment resets the admin user with default credentials (for development/staging)
+
+**⚠️ Warning for Production**: In a real production environment, you may want to:
+- Run migrations separately and keep data persistent
+- Use a separate database provisioning step
+- Handle seed data differently (don't delete existing users)
+
+Contact Render support if you need custom build/deploy workflows.
 
 ### Set Environment Variables
 
@@ -120,6 +141,66 @@ Before deploying, test locally with a test database:
 3. Verify health check: `curl http://localhost:5000/healthz`
 
 ## Troubleshooting
+
+### Admin Login Not Working
+
+If you can connect to the database but the admin login fails:
+
+**Symptom**: Login page loads, but username/password returns "Invalid credentials" even though you've just deployed.
+
+**Root Cause Analysis**:
+
+The most common causes are:
+
+1. **Migrations were not run** - Tables don't exist in the database
+   - Check: Run `SELECT * FROM users;` in Neon Console
+   - If error "relation does not exist", tables were never created
+   - Fix: Ensure `pnpm --filter @workspace/db push` ran successfully in build
+
+2. **Seed data was not created** - Admin user doesn't exist
+   - Check: Query `SELECT * FROM users WHERE username = 'admin';` in Neon Console
+   - If no results, the seed script didn't run
+   - Fix: Ensure `pnpm --filter @workspace/scripts seed` ran successfully in build
+
+3. **Wrong database being used** - Render is pointing to wrong Neon branch
+   - Check: Look at the `DATABASE_URL` in Render Settings → Environment
+   - Verify it matches the Neon pooler endpoint you intended
+   - Check logs: Application logs will show `[DB] Connecting to: host.region.us-east-1.aws.neon.tech/dbname`
+   - Fix: Update DATABASE_URL in Render if incorrect
+
+4. **Data on different Neon branch** - Admin was seeded on dev branch, Render uses main
+   - Check: Neon Console shows which branch `DATABASE_URL` points to
+   - Fix: Either seed data to correct branch, or update DATABASE_URL to correct branch
+
+**How to Debug**:
+
+1. Check Render build logs:
+   - Go to Render Dashboard → Your Service → Events
+   - Look for output from `pnpm --filter @workspace/db push` (should show "✅ schema updated")
+   - Look for output from `pnpm --filter @workspace/scripts seed` (should show "🎉 Seed completed")
+
+2. Check Render runtime logs:
+   - Go to Render Dashboard → Your Service → Logs
+   - Look for `[DB] Connecting to: ...` to see which database is being used
+   - Look for errors about "table does not exist" or authentication failures
+
+3. Query the database directly from Neon Console:
+   ```sql
+   -- Check if users table exists
+   SELECT * FROM users;
+   
+   -- Check if admin user exists
+   SELECT id, username, role FROM users WHERE username = 'admin';
+   
+   -- Check table structure
+   SELECT column_name, data_type FROM information_schema.columns 
+   WHERE table_name = 'users' ORDER BY ordinal_position;
+   ```
+
+4. Re-trigger a fresh deployment:
+   - Go to Render Dashboard → Your Service → Manual Deploy
+   - Select your branch and click "Deploy"
+   - Watch logs to see if migrations/seed run successfully this time
 
 ### Error: "too many connections"
 

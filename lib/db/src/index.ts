@@ -53,6 +53,17 @@ if (!connectionString.includes('sslmode')) {
   poolConfig.ssl = { rejectUnauthorized: false };
 }
 
+// Diagnostic logging: log which database is being connected to (without exposing credentials)
+// Extract host and database name from connection string for logging purposes
+try {
+  const dbUrl = new URL(connectionString);
+  const host = dbUrl.hostname;
+  const dbName = dbUrl.pathname?.replace(/^\//, '') || 'unknown';
+  console.log(`[DB] Connecting to: ${host}/${dbName} (pool max: ${poolConfig.max})`);
+} catch (e) {
+  console.log(`[DB] Database connection configured (pool max: ${poolConfig.max})`);
+}
+
 export const pool = new Pool(poolConfig);
 export const db = drizzle(pool, { schema });
 
