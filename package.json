@@ -2,12 +2,16 @@
   "name": "workspace",
   "version": "0.0.0",
   "license": "MIT",
+  "packageManager": "pnpm@10.15.0",
   "scripts": {
-    "build": "npm run typecheck && npm run build:workspaces",
-    "build:workspaces": "npm -r --if-present run build",
+    "build": "corepack pnpm --filter @workspace/api-server run build",
+    "build:full": "corepack pnpm run typecheck && corepack pnpm run build:workspaces",
+    "build:workspaces": "corepack pnpm -r --if-present run build",
     "dev": "node ./scripts/dev.mjs",
+    "start": "corepack pnpm --filter @workspace/api-server start",
     "typecheck:libs": "tsc --build",
-    "typecheck": "npm run typecheck:libs && npm -r --prefix artifacts --if-present run typecheck"
+    "typecheck": "corepack pnpm run typecheck:libs && corepack pnpm --filter @workspace/api-server run typecheck",
+    "typecheck:full": "corepack pnpm run typecheck:libs && corepack pnpm --filter @workspace/api-server --filter @workspace/playzone-bar run typecheck"
   },
   "private": true,
   "dependencies": {

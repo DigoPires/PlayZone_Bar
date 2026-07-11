@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: playzone-api
+    env: node
+    rootDir: artifacts/api-server
+    plan: starter
+    buildCommand: >-
+      corepack enable &&
+      corepack prepare pnpm@10.15.0 --activate &&
+      pnpm install --filter @workspace/api-server... --ignore-scripts &&
+      pnpm --filter @workspace/api-server run build
+    startCommand: pnpm --filter @workspace/api-server start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
