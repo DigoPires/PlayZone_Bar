@@ -1,0 +1,1603 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: PlayZone Bar API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: reservations
+    description: Reservation management
+  - name: waitlist
+    description: Waitlist management
+  - name: gallery
+    description: Gallery management
+  - name: menu
+    description: Menu management
+  - name: events
+    description: Events management
+  - name: coupons
+    description: Coupon management
+  - name: availability
+    description: Availability patterns
+  - name: stats
+    description: Statistics and analytics
+  - name: settings
+    description: App settings
+  - name: users
+    description: User management
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+
+  # RESERVATIONS
+  /reservations:
+    get:
+      operationId: listReservations
+      tags: [reservations]
+      summary: List reservations
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, cancelled, completed, checkin]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [salao, gamer]
+        - name: date
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of reservations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservationList"
+    post:
+      operationId: createReservation
+      tags: [reservations]
+      summary: Create a reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+
+  /reservations/{id}:
+    get:
+      operationId: getReservation
+      tags: [reservations]
+      summary: Get a reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateReservation
+      tags: [reservations]
+      summary: Update a reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationUpdate"
+      responses:
+        "200":
+          description: Updated reservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+    delete:
+      operationId: deleteReservation
+      tags: [reservations]
+      summary: Delete a reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /reservations/{id}/checkin:
+    post:
+      operationId: checkInReservation
+      tags: [reservations]
+      summary: Check in a reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Checked in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+
+  /reservations/availability:
+    get:
+      operationId: getAvailability
+      tags: [reservations]
+      summary: Get available time slots for a date and type
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [salao, gamer]
+      responses:
+        "200":
+          description: Available slots
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilitySlots"
+
+  # WAITLIST
+  /waitlist:
+    get:
+      operationId: listWaitlist
+      tags: [waitlist]
+      summary: List waitlist entries
+      responses:
+        "200":
+          description: Waitlist entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WaitlistEntry"
+    post:
+      operationId: createWaitlistEntry
+      tags: [waitlist]
+      summary: Add to waitlist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WaitlistInput"
+      responses:
+        "201":
+          description: Added to waitlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaitlistEntry"
+
+  /waitlist/{id}:
+    delete:
+      operationId: deleteWaitlistEntry
+      tags: [waitlist]
+      summary: Remove from waitlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Removed
+
+  # GALLERY
+  /gallery:
+    get:
+      operationId: listGallery
+      tags: [gallery]
+      summary: List gallery images
+      parameters:
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Gallery images
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GalleryImage"
+    post:
+      operationId: createGalleryImage
+      tags: [gallery]
+      summary: Add a gallery image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GalleryImageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryImage"
+
+  /gallery/{id}:
+    patch:
+      operationId: updateGalleryImage
+      tags: [gallery]
+      summary: Update a gallery image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GalleryImageUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryImage"
+    delete:
+      operationId: deleteGalleryImage
+      tags: [gallery]
+      summary: Delete a gallery image
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # MENU CATEGORIES
+  /menu/categories:
+    get:
+      operationId: listMenuCategories
+      tags: [menu]
+      summary: List menu categories
+      responses:
+        "200":
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuCategory"
+    post:
+      operationId: createMenuCategory
+      tags: [menu]
+      summary: Create menu category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuCategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuCategory"
+
+  /menu/categories/{id}:
+    patch:
+      operationId: updateMenuCategory
+      tags: [menu]
+      summary: Update menu category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuCategoryUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuCategory"
+    delete:
+      operationId: deleteMenuCategory
+      tags: [menu]
+      summary: Delete menu category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # MENU ITEMS
+  /menu/items:
+    get:
+      operationId: listMenuItems
+      tags: [menu]
+      summary: List menu items
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+        - name: availableOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Menu items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItem"
+    post:
+      operationId: createMenuItem
+      tags: [menu]
+      summary: Create menu item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuItemInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+
+  /menu/items/{id}:
+    patch:
+      operationId: updateMenuItem
+      tags: [menu]
+      summary: Update menu item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+    delete:
+      operationId: deleteMenuItem
+      tags: [menu]
+      summary: Delete menu item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # EVENTS
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List events
+      parameters:
+        - name: upcoming
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Create event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+    patch:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      summary: Delete event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # COUPONS
+  /coupons:
+    get:
+      operationId: listCoupons
+      tags: [coupons]
+      summary: List coupons
+      responses:
+        "200":
+          description: Coupons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Coupon"
+    post:
+      operationId: createCoupon
+      tags: [coupons]
+      summary: Create coupon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+
+  /coupons/{id}:
+    patch:
+      operationId: updateCoupon
+      tags: [coupons]
+      summary: Update coupon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Coupon"
+    delete:
+      operationId: deleteCoupon
+      tags: [coupons]
+      summary: Delete coupon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /coupons/validate:
+    post:
+      operationId: validateCoupon
+      tags: [coupons]
+      summary: Validate a coupon code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CouponValidateInput"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CouponValidation"
+
+  # AVAILABILITY PATTERNS
+  /availability:
+    get:
+      operationId: listAvailabilityPatterns
+      tags: [availability]
+      summary: List availability patterns
+      responses:
+        "200":
+          description: Patterns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailabilityPattern"
+    post:
+      operationId: createAvailabilityPattern
+      tags: [availability]
+      summary: Create availability pattern
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilityPatternInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityPattern"
+
+  /availability/{id}:
+    patch:
+      operationId: updateAvailabilityPattern
+      tags: [availability]
+      summary: Update availability pattern
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilityPatternUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityPattern"
+    delete:
+      operationId: deleteAvailabilityPattern
+      tags: [availability]
+      summary: Delete availability pattern
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # STATS
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /stats/reservations-by-day:
+    get:
+      operationId: getReservationsByDay
+      tags: [stats]
+      summary: Reservations grouped by day (last 30 days)
+      responses:
+        "200":
+          description: Reservations by day
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReservationsByDay"
+
+  /stats/peak-hours:
+    get:
+      operationId: getPeakHours
+      tags: [stats]
+      summary: Most popular booking hours
+      responses:
+        "200":
+          description: Peak hours
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PeakHour"
+
+  # SETTINGS
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get app settings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update app settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+  # USERS
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List admin users
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminUser"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create admin user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+
+  /users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthUser:
+      type: object
+      required: [id, username, name, role]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+
+    Reservation:
+      type: object
+      required: [id, name, phone, people, date, time, type, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        people:
+          type: integer
+        date:
+          type: string
+        time:
+          type: string
+        type:
+          type: string
+          enum: [salao, gamer]
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled, completed, checkin]
+        notes:
+          type: ["string", "null"]
+        couponCode:
+          type: ["string", "null"]
+        discountApplied:
+          type: ["number", "null"]
+        qrCode:
+          type: ["string", "null"]
+        checkedInAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ReservationList:
+      type: object
+      required: [reservations, total, page, limit]
+      properties:
+        reservations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reservation"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ReservationInput:
+      type: object
+      required: [name, phone, people, date, time, type]
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        people:
+          type: integer
+          minimum: 1
+        date:
+          type: string
+        time:
+          type: string
+        type:
+          type: string
+          enum: [salao, gamer]
+        notes:
+          type: string
+        couponCode:
+          type: string
+
+    ReservationUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        people:
+          type: integer
+        date:
+          type: string
+        time:
+          type: string
+        type:
+          type: string
+          enum: [salao, gamer]
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled, completed, checkin]
+        notes:
+          type: string
+
+    AvailabilitySlots:
+      type: object
+      required: [date, type, slots]
+      properties:
+        date:
+          type: string
+        type:
+          type: string
+        slots:
+          type: array
+          items:
+            type: string
+
+    WaitlistEntry:
+      type: object
+      required: [id, name, phone, date, time, type, people, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        date:
+          type: string
+        time:
+          type: string
+        type:
+          type: string
+          enum: [salao, gamer]
+        people:
+          type: integer
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    WaitlistInput:
+      type: object
+      required: [name, phone, date, time, type, people]
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        date:
+          type: string
+        time:
+          type: string
+        type:
+          type: string
+          enum: [salao, gamer]
+        people:
+          type: integer
+        notes:
+          type: string
+
+    GalleryImage:
+      type: object
+      required: [id, url, publicId, active, order, createdAt]
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        publicId:
+          type: string
+        active:
+          type: boolean
+        order:
+          type: integer
+        alt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    GalleryImageInput:
+      type: object
+      required: [url, publicId]
+      properties:
+        url:
+          type: string
+        publicId:
+          type: string
+        active:
+          type: boolean
+        order:
+          type: integer
+        alt:
+          type: string
+
+    GalleryImageUpdate:
+      type: object
+      properties:
+        active:
+          type: boolean
+        order:
+          type: integer
+        alt:
+          type: string
+
+    MenuCategory:
+      type: object
+      required: [id, name, order]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        order:
+          type: integer
+        icon:
+          type: ["string", "null"]
+
+    MenuCategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        order:
+          type: integer
+        icon:
+          type: string
+
+    MenuCategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        order:
+          type: integer
+        icon:
+          type: string
+
+    MenuItem:
+      type: object
+      required: [id, categoryId, name, price, available]
+      properties:
+        id:
+          type: integer
+        categoryId:
+          type: integer
+        categoryName:
+          type: ["string", "null"]
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: number
+        imageUrl:
+          type: ["string", "null"]
+        available:
+          type: boolean
+
+    MenuItemInput:
+      type: object
+      required: [categoryId, name, price]
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        imageUrl:
+          type: string
+        available:
+          type: boolean
+
+    MenuItemUpdate:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        imageUrl:
+          type: string
+        available:
+          type: boolean
+
+    Event:
+      type: object
+      required: [id, title, date, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        date:
+          type: string
+        endDate:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        capacity:
+          type: ["integer", "null"]
+        location:
+          type: ["string", "null"]
+        featured:
+          type: boolean
+        createdAt:
+          type: string
+
+    EventInput:
+      type: object
+      required: [title, date]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+        endDate:
+          type: string
+        imageUrl:
+          type: string
+        price:
+          type: number
+        capacity:
+          type: integer
+        location:
+          type: string
+        featured:
+          type: boolean
+
+    EventUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        date:
+          type: string
+        endDate:
+          type: string
+        imageUrl:
+          type: string
+        price:
+          type: number
+        capacity:
+          type: integer
+        location:
+          type: string
+        featured:
+          type: boolean
+
+    Coupon:
+      type: object
+      required: [id, code, discountType, discountValue, active, uses, createdAt]
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        discountType:
+          type: string
+          enum: [percent, fixed]
+        discountValue:
+          type: number
+        validUntil:
+          type: ["string", "null"]
+        maxUses:
+          type: ["integer", "null"]
+        uses:
+          type: integer
+        active:
+          type: boolean
+        createdAt:
+          type: string
+
+    CouponInput:
+      type: object
+      required: [code, discountType, discountValue]
+      properties:
+        code:
+          type: string
+        discountType:
+          type: string
+          enum: [percent, fixed]
+        discountValue:
+          type: number
+        validUntil:
+          type: string
+        maxUses:
+          type: integer
+        active:
+          type: boolean
+
+    CouponUpdate:
+      type: object
+      properties:
+        code:
+          type: string
+        discountType:
+          type: string
+          enum: [percent, fixed]
+        discountValue:
+          type: number
+        validUntil:
+          type: string
+        maxUses:
+          type: integer
+        active:
+          type: boolean
+
+    CouponValidateInput:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+
+    CouponValidation:
+      type: object
+      required: [valid]
+      properties:
+        valid:
+          type: boolean
+        coupon:
+          $ref: "#/components/schemas/Coupon"
+        message:
+          type: ["string", "null"]
+
+    AvailabilityPattern:
+      type: object
+      required: [id, dayOfWeek, type, slots]
+      properties:
+        id:
+          type: integer
+        dayOfWeek:
+          type: integer
+          minimum: 0
+          maximum: 6
+        type:
+          type: string
+          enum: [salao, gamer]
+        slots:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+
+    AvailabilityPatternInput:
+      type: object
+      required: [dayOfWeek, type, slots]
+      properties:
+        dayOfWeek:
+          type: integer
+          minimum: 0
+          maximum: 6
+        type:
+          type: string
+          enum: [salao, gamer]
+        slots:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+
+    AvailabilityPatternUpdate:
+      type: object
+      properties:
+        dayOfWeek:
+          type: integer
+        type:
+          type: string
+          enum: [salao, gamer]
+        slots:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+
+    DashboardStats:
+      type: object
+      required: [totalReservations, pendingReservations, confirmedToday, occupancyRate, totalEvents, activeMenuItems, galleryImages, recentReservations]
+      properties:
+        totalReservations:
+          type: integer
+        pendingReservations:
+          type: integer
+        confirmedToday:
+          type: integer
+        occupancyRate:
+          type: number
+        totalEvents:
+          type: integer
+        activeMenuItems:
+          type: integer
+        galleryImages:
+          type: integer
+        recentReservations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reservation"
+
+    ReservationsByDay:
+      type: object
+      required: [date, count]
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+        salaoCount:
+          type: integer
+        gamerCount:
+          type: integer
+
+    PeakHour:
+      type: object
+      required: [hour, count]
+      properties:
+        hour:
+          type: string
+        count:
+          type: integer
+
+    Settings:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: integer
+        entryPrice:
+          type: ["number", "null"]
+        whatsapp:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        instagram:
+          type: ["string", "null"]
+        facebook:
+          type: ["string", "null"]
+        tiktok:
+          type: ["string", "null"]
+        heroTitlePurple:
+          type: ["string", "null"]
+        heroTitleWhite:
+          type: ["string", "null"]
+        heroSubtitle:
+          type: ["string", "null"]
+        aboutText:
+          type: ["string", "null"]
+        seoTitle:
+          type: ["string", "null"]
+        seoDescription:
+          type: ["string", "null"]
+        logoUrl:
+          type: ["string", "null"]
+        faviconUrl:
+          type: ["string", "null"]
+        googleMapsUrl:
+          type: ["string", "null"]
+        openingHours:
+          type: ["string", "null"]
+
+    SettingsUpdate:
+      type: object
+      properties:
+        entryPrice:
+          type: number
+        whatsapp:
+          type: string
+        address:
+          type: string
+        instagram:
+          type: string
+        facebook:
+          type: string
+        tiktok:
+          type: string
+        heroTitlePurple:
+          type: string
+        heroTitleWhite:
+          type: string
+        heroSubtitle:
+          type: string
+        aboutText:
+          type: string
+        seoTitle:
+          type: string
+        seoDescription:
+          type: string
+        logoUrl:
+          type: string
+        faviconUrl:
+          type: string
+        googleMapsUrl:
+          type: string
+        openingHours:
+          type: string
+
+    AdminUser:
+      type: object
+      required: [id, email, name, role, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        createdAt:
+          type: string
+
+    UserInput:
+      type: object
+      required: [email, name, password, role]
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        email:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
