@@ -4,7 +4,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.15.0",
   "scripts": {
-    "build": "corepack pnpm --filter @workspace/api-server run build",
+    "build": "corepack pnpm --filter @workspace/playzone-bar run build && corepack pnpm --filter @workspace/api-server run build",
     "build:full": "corepack pnpm run typecheck && corepack pnpm run build:workspaces",
     "build:workspaces": "corepack pnpm -r --if-present run build",
     "dev": "node ./scripts/dev.mjs",

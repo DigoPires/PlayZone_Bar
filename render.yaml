@@ -7,7 +7,8 @@ services:
     buildCommand: >-
       corepack enable &&
       corepack prepare pnpm@10.15.0 --activate &&
-      pnpm install --filter @workspace/api-server... --ignore-scripts &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @workspace/playzone-bar run build &&
       pnpm --filter @workspace/api-server run build
     startCommand: pnpm --filter @workspace/api-server start
     envVars:
