@@ -22,6 +22,9 @@ if (!process.env.SESSION_SECRET) {
 
 const app = express();
 
+// Trust Render's reverse proxy so the request protocol and secure cookies are handled correctly.
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,
@@ -48,28 +51,23 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       httpOnly: true,
       sameSite: "lax",
-      secure: false, // Allow cookies in development
+      secure: isProduction,
     },
   }),
 );
 
 // CORS configuration
-if (isProduction) {
-  // In production, allow same-origin only
-  app.use(cors({ credentials: true }));
-} else {
-  // In development, allow all origins for easier testing
-  app.use(cors({
-    origin: true,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }));
-}
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
