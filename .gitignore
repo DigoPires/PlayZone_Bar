@@ -60,6 +60,10 @@ attached_assets/
 .env.local
 .env.*.local
 
+# Local-only files
+COMMIT_MESSAGE.md
+scripts/inspect-db.mjs
+
 # IDE
 *.swp
 *.swo
