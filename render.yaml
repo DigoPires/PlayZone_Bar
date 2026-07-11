@@ -5,8 +5,6 @@ services:
     rootDir: artifacts/api-server
     plan: starter
     buildCommand: >-
-      corepack enable &&
-      corepack prepare pnpm@10.15.0 --activate &&
       pnpm install --no-frozen-lockfile &&
       pnpm --filter @workspace/db push &&
       pnpm --filter @workspace/scripts seed &&
