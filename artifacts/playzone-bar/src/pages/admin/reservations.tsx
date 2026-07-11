@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Table,
   TableBody,
@@ -32,7 +33,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function AdminReservations() {
   const { toast } = useToast();

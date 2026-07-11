@@ -348,14 +348,9 @@ export default function AdminMenu() {
   };
 
   const handleDeleteItem = (id: number) => {
-    if (confirm("Excluir este item?")) {
-      deleteItem.mutate({ id }, {
-        onSuccess: () => {
-          toast({ title: "Item excluído" });
-          queryClient.invalidateQueries({ queryKey: ["/api/menu/items"] });
-        }
-      });
-    }
+    setDeleteId(id);
+    setDeleteType("item");
+    setDeleteConfirmOpen(true);
   };
 
   const toggleItemAvailability = (id: number, current: boolean) => {
